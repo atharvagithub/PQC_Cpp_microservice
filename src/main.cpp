@@ -1,0 +1,38 @@
+#include <pistache/endpoint.h>
+#include <pistache/router.h>
+#include <pistache/http.h>
+#include <pistache/net.h>
+#include "pqc_service.h"
+
+using namespace Pistache;
+
+void setupRoutes(Rest::Router& router, PQCService& pqcService) {
+    
+    Rest::Routes::Post(router, "/encrypt", [&](const Rest::Request& request, Http::ResponseWriter response) -> Rest::Route::Result {
+    auto body = request.body();
+    auto ciphertext = pqcService.encrypt(body);
+    response.send(Http::Code::Ok, "{\"ciphertext\":\"" + ciphertext + "\"}", MIME(Application, Json));
+    return Rest::Route::Result::Ok;
+    });
+
+    /*Rest::Routes::Post(router, "/decrypt", [&](const Rest::Request& request, Http::ResponseWriter response) -> Rest::Route::Result {
+    auto body = request.body();
+    auto plaintext = pqcService.decrypt(body);
+    response.send(Http::Code::Ok, "{\"plaintext\":\"" + plaintext + "\"}", MIME(Application, Json));
+    return Rest::Route::Result::Ok;
+    });*/
+
+}
+
+int main() {
+    Http::Endpoint server(Address("*:9000"));
+    auto opts = Http::Endpoint::options().threads(1);
+    server.init(opts);
+
+    PQCService pqcService;
+    Rest::Router router;
+    setupRoutes(router, pqcService);
+
+    server.setHandler(router.handler());
+    server.serve();
+}
