@@ -12,6 +12,11 @@ RUN git clone --recursive https://github.com/open-quantum-safe/liboqs.git && \
     make -j$(nproc) && \
     make install && ldconfig
 
+# Install dependencies (including nlohmann JSON)
+RUN apt update && apt install -y \
+    build-essential cmake git libssl-dev curl libevent-dev \
+    libcurl4-openssl-dev ninja-build nlohmann-json3-dev
+
 RUN apt install -y python3-pip && pip3 install meson ninja
    
 # Build Pistache & install it system-wide
@@ -25,6 +30,8 @@ RUN git clone https://github.com/pistacheio/pistache.git && \
 # Build PQC Microservice (using Pistache static lib)
 WORKDIR /app
 COPY . /app
+
+RUN echo $(realpath data_encrypted.bin)
 
 RUN mkdir build && cd build && \
     cmake .. && \

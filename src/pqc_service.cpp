@@ -101,6 +101,7 @@ std::string PQCService::encrypt_data(const std::string& body) {
 
         // Save data to temp file
         std::string filename = "/mnt/c/Users/Atharva/pistache/pqc_microservice/data_to_encrypt.json";
+        //std::string filename = "/app/data_to_encrypt.json";
         std::ofstream outfile(filename);
         outfile << input["data"].dump(4);
         outfile.close();
@@ -150,6 +151,7 @@ std::string PQCService::encrypt_data(const std::string& body) {
 
         // Save encrypted data
         std::ofstream enc_file("/mnt/c/Users/Atharva/pistache/pqc_microservice/data_encrypted.bin", std::ios::binary);
+        //std::ofstream enc_file("/app/data_encrypted.bin", std::ios::binary);
         enc_file.write(reinterpret_cast<const char*>(ciphertext.data()), ciphertext_len);
         enc_file.close();
 

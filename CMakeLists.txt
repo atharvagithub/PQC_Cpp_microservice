@@ -3,31 +3,38 @@ project(PQCMicroservice)
 
 set(CMAKE_CXX_STANDARD 17)
 
-# Find liboqs library
-find_library(OQS_LIB oqs PATHS /usr/local/lib REQUIRED)
+# Find liboqs (already built in Docker)
+find_library(OQS_LIB oqs REQUIRED)
 
 # Find OpenSSL
 find_package(OpenSSL REQUIRED)
 
-include_directories(/usr/include)
+# Include Pistache headers from its build
+include_directories(/pistache/include)
 
-# Define executable target first
+# Add your project source files
 add_executable(pqc_microservice
     src/main.cpp
     src/pqc_service.cpp
 )
 
-# Include Pistache & liboqs headers
+# Include header paths manually
 target_include_directories(pqc_microservice PRIVATE
-    ${CMAKE_SOURCE_DIR}/../include
-    ${CMAKE_SOURCE_DIR}/../build/include
-    /usr/local/include
+    /usr/local/include          # for liboqs
+    /usr/include/nlohmann       # for json.hpp (from apt install nlohmann-json)
+    /pistache/include           # for pistache (from build)
 )
-
-# Link Pistache static lib & liboqs
+# Link Pistache static lib manually
 target_link_libraries(pqc_microservice
     ${OQS_LIB}
-    ${CMAKE_SOURCE_DIR}/../build/src/libpistache.a
+    /pistache/build/src/libpistache.a
+    pthread
+)
+
+# Link static Pistache library and other dependencies
+target_link_libraries(pqc_microservice
+    ${OQS_LIB}
     OpenSSL::Crypto
     pthread
+    /pistache/build/src/libpistache.a
 )
