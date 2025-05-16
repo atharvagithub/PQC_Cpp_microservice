@@ -1,0 +1,21 @@
+{
+    "OBJECTID": 1,
+    "Nature_Of_": "URBAN",
+    "Premise_Ty": "SHOP",
+    "Organizati": "ABHYUDAY BANK",
+    "Building_N": 1,
+    "Street_Typ": "ROAD",
+    "Street_Nam": "RANNA PARK ROAD",
+    "Landmark": "NR RANNA PARK BUS STAND",
+    "Locality": "GHATLODIA",
+    "City": "AHMEDABAD",
+    "Post_Offic": "GHATLODIA POST OFFICE",
+    "District": "AHMEDABAD",
+    "Sub_Distri": "AHMEDABAD",
+    "State": "GUJARAT",
+    "Postman_Be": 1000,
+    "Pincode": 380061,
+    "SymbolID": 1,
+    "lat": 23.0682816437,
+    "long": 72.5479675457
+  }
