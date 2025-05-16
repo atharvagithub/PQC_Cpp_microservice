@@ -3,11 +3,26 @@
 #include <pistache/http.h>
 #include <pistache/net.h>
 #include "pqc_service.h"
+#include <nlohmann/json.hpp>
 
 using namespace Pistache;
+using json = nlohmann::json;
 
 void setupRoutes(Rest::Router& router, PQCService& pqcService) {
     
+    Rest::Routes::Get(router, "/generate_keys", [&](const Rest::Request&, Http::ResponseWriter response) -> Rest::Route::Result {
+        try {
+            auto [pub, priv] = pqcService.generate_keypair();
+            json j;
+            j["public_key"] = pub;
+            j["private_key"] = priv;
+            j["note"] = "Keep your private key safe. The public key can be shared.";
+            response.send(Http::Code::Ok, j.dump(), MIME(Application, Json));
+        } catch (const std::exception& e) {
+            response.send(Http::Code::Internal_Server_Error, std::string("Key generation error: ") + e.what());
+        }
+    });
+
     Rest::Routes::Post(router, "/encrypt", [&](const Rest::Request& request, Http::ResponseWriter response) -> Rest::Route::Result {
     auto body = request.body();
     auto ciphertext = pqcService.encrypt(body);

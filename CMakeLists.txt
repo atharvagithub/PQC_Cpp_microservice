@@ -5,6 +5,7 @@ set(CMAKE_CXX_STANDARD 17)
 
 # Find liboqs library
 find_library(OQS_LIB oqs PATHS /usr/local/lib REQUIRED)
+include_directories(/usr/include)
 
 # Define executable target first
 add_executable(pqc_microservice
