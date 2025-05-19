@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+
+  pqc-service:
+    build: .
+    container_name: pqc-service
+    ports:
+      - "9000:9000"
+    depends_on:
+      - ipfs
+    networks:
+      - pqcnet
+
+  ipfs:
+    image: ipfs/go-ipfs:latest
+    container_name: ipfs
+    ports:
+      - "5001:5001"    # IPFS API
+      - "8081:8080"    # IPFS Gateway (optional)
+      - "4001:4001"    # Swarm
+    volumes:
+      - ipfs_data:/data/ipfs
+    networks:
+      - pqcnet
+
+networks:
+  pqcnet:
+
+volumes:
+  ipfs_data:

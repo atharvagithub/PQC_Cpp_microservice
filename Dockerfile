@@ -5,6 +5,13 @@ RUN apt update && apt install -y \
     build-essential cmake git libssl-dev curl libevent-dev \
     libcurl4-openssl-dev ninja-build
 
+# Install IPFS (Kubo)
+RUN curl -O https://dist.ipfs.tech/kubo/v0.24.0/kubo_v0.24.0_linux-amd64.tar.gz && \
+    tar -xvzf kubo_v0.24.0_linux-amd64.tar.gz && \
+    cd kubo && \
+    bash install.sh && \
+    ipfs init    
+
 # Install liboqs
 RUN git clone --recursive https://github.com/open-quantum-safe/liboqs.git && \
     cd liboqs && mkdir build && cd build && \

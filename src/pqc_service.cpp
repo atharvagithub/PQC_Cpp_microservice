@@ -9,6 +9,8 @@
 #include <vector>
 #include <nlohmann/json.hpp>
 #include <fstream>
+#include <cstdio> 
+#include <memory>
 
 using json = nlohmann::json;
 
@@ -81,6 +83,7 @@ std::string PQCService::encrypt(const std::string& plaintext) {
 
 // Encrypt file contents with AES-GCM, AES key encapsulated via recipient's Kyber512 public key
 std::string PQCService::encrypt_data(const std::string& body) {
+    std::string cid;
     try {
         // Parse incoming JSON
         json input = json::parse(body);
@@ -100,8 +103,8 @@ std::string PQCService::encrypt_data(const std::string& body) {
         }
 
         // Save data to temp file
-        std::string filename = "/mnt/c/Users/Atharva/pistache/pqc_microservice/data_to_encrypt.json";
-        //std::string filename = "/app/data_to_encrypt.json";
+        //std::string filename = "/mnt/c/Users/Atharva/pistache/pqc_microservice/data_to_encrypt.json";
+        std::string filename = "/app/data_to_encrypt.json";
         std::ofstream outfile(filename);
         outfile << input["data"].dump(4);
         outfile.close();
@@ -150,16 +153,20 @@ std::string PQCService::encrypt_data(const std::string& body) {
         EVP_CIPHER_CTX_free(ctx);
 
         // Save encrypted data
-        std::ofstream enc_file("/mnt/c/Users/Atharva/pistache/pqc_microservice/data_encrypted.bin", std::ios::binary);
-        //std::ofstream enc_file("/app/data_encrypted.bin", std::ios::binary);
+        //std::ofstream enc_file("/mnt/c/Users/Atharva/pistache/pqc_microservice/data_encrypted.bin", std::ios::binary);
+        std::ofstream enc_file("/app/data_encrypted.bin", std::ios::binary);
         enc_file.write(reinterpret_cast<const char*>(ciphertext.data()), ciphertext_len);
         enc_file.close();
+
+        //cid = storeToIPFS("/mnt/c/Users/Atharva/pistache/pqc_microservice/data_encrypted.bin");
+        cid = storeToIPFS("/app/data_encrypted.bin");
 
         // Return metadata JSON
         json out;
         out["aes_iv"] = bytes_to_hex(aes_iv, sizeof(aes_iv));
         out["aes_tag"] = bytes_to_hex(aes_tag, sizeof(aes_tag));
         out["kem_ciphertext"] = bytes_to_hex(kem_ciphertext.data(), kem_ciphertext.size());
+        out["CID"] = cid;
         return out.dump();
 
     } catch (const std::exception& e) {
@@ -235,7 +242,7 @@ nlohmann::json PQCService::decrypt_data(const std::string& body) {
 
         EVP_CIPHER_CTX_free(ctx);
         OQS_KEM_free(kem);
-
+        
         // Return decrypted data as string (assumes UTF-8 JSON)
         //return std::string(decrypted.begin(), decrypted.begin() + len + final_len);
         std::string decrypted_str(decrypted.begin(), decrypted.begin() + len + final_len);
@@ -245,4 +252,27 @@ nlohmann::json PQCService::decrypt_data(const std::string& body) {
     } catch (const std::exception& e) {
         return std::string("Decryption error: ") + e.what();
     }
+}
+
+std::string PQCService::storeToIPFS(const std::string& filepath) {
+    std::string command = "ipfs add -Q " + filepath;
+    char buffer[128];
+    std::string result;
+    FILE* pipe = popen(command.c_str(), "r");
+    if (!pipe) return "Error";
+    while (fgets(buffer, sizeof buffer, pipe) != nullptr) {
+        //result += buffer;
+        result = buffer;
+        result.erase(result.find_last_not_of(" \n\r\t") + 1);  // Trim trailing newline
+    }
+    pclose(pipe);
+    return result;  // CID of the file
+}
+
+bool PQCService::fetchFromIPFS(const std::string& cid, const std::string& body) {
+    json input = json::parse(body);
+    std::string filePath = input["encrypted_file"];
+    std::string command = "ipfs get " + cid + " -o " + filePath;
+    int status = system(command.c_str());
+    return status == 0;
 }

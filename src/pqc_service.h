@@ -10,6 +10,8 @@ public:
     std::pair<std::string, std::string> generate_keypair(); // pub, priv
     std::string encrypt_data(const std::string& body);
     nlohmann::json decrypt_data(const std::string& body);
+    std::string storeToIPFS(const std::string& filepath);
+    bool fetchFromIPFS(const std::string& cid, const std::string& body);
 
 private:
     std::string bytes_to_hex(const uint8_t* data, size_t len);

@@ -18,6 +18,7 @@ void setupRoutes(Rest::Router& router, PQCService& pqcService) {
             j["private_key"] = priv;
             j["note"] = "Keep your private key safe. The public key can be shared.";
             response.send(Http::Code::Ok, j.dump(), MIME(Application, Json));
+            return Rest::Route::Result::Ok;
         } catch (const std::exception& e) {
             response.send(Http::Code::Internal_Server_Error, std::string("Key generation error: ") + e.what());
         }
@@ -55,10 +56,25 @@ void setupRoutes(Rest::Router& router, PQCService& pqcService) {
     });
 
     Rest::Routes::Post(router, "/encrypt", [&](const Rest::Request& request, Http::ResponseWriter response) -> Rest::Route::Result {
-    auto body = request.body();
-    auto ciphertext = pqcService.encrypt(body);
-    response.send(Http::Code::Ok, "{\"ciphertext\":\"" + ciphertext + "\"}", MIME(Application, Json));
-    return Rest::Route::Result::Ok;
+        auto body = request.body();
+        auto ciphertext = pqcService.encrypt(body);
+        response.send(Http::Code::Ok, "{\"ciphertext\":\"" + ciphertext + "\"}", MIME(Application, Json));
+        return Rest::Route::Result::Ok;
+    });
+
+    Rest::Routes::Post(router, "/upload", [&](const Rest::Request& request, Http::ResponseWriter response) -> Rest::Route::Result {
+        auto body = request.body();
+        std::string cid = pqcService.storeToIPFS(body);
+        response.send(Http::Code::Ok, "{\"cid\":\"" + cid + "\"}", MIME(Application, Json));
+        return Rest::Route::Result::Ok;
+    });
+
+    Rest::Routes::Get(router, "/download/:cid", [&](const Rest::Request& request, Http::ResponseWriter response) -> Rest::Route::Result {
+        auto cid = request.param(":cid").as<std::string>();
+        auto body = request.body();
+        bool success = pqcService.fetchFromIPFS(cid, body);
+        response.send(Http::Code::Ok, success ? "File downloaded." : "Failed to fetch file.");
+        return Rest::Route::Result::Ok;
     });
 
     /*Rest::Routes::Post(router, "/decrypt", [&](const Rest::Request& request, Http::ResponseWriter response) -> Rest::Route::Result {
