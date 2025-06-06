@@ -17,6 +17,10 @@ void setupRoutes(Rest::Router& router, PQCService& pqcService) {
             j["public_key"] = pub;
             j["private_key"] = priv;
             j["note"] = "Keep your private key safe. The public key can be shared.";
+            response.headers()
+            .add<Http::Header::AccessControlAllowOrigin>("*")
+            .add<Http::Header::AccessControlAllowHeaders>("Content-Type")
+            .add<Http::Header::AccessControlAllowMethods>("GET");
             response.send(Http::Code::Ok, j.dump(), MIME(Application, Json));
             return Rest::Route::Result::Ok;
         } catch (const std::exception& e) {
@@ -24,40 +28,80 @@ void setupRoutes(Rest::Router& router, PQCService& pqcService) {
         }
     });
 
+    Rest::Routes::Options(router, "/encrypt_data", [](const Rest::Request&, Http::ResponseWriter response) -> Rest::Route::Result {
+        response.headers()
+            .add<Http::Header::AccessControlAllowOrigin>("*")
+            .add<Http::Header::AccessControlAllowMethods>("POST, OPTIONS")
+            .add<Http::Header::AccessControlAllowHeaders>("Content-Type");
+        response.send(Http::Code::Ok);
+        return Rest::Route::Result::Ok;
+    });
+
+
     Rest::Routes::Post(router, "/encrypt_data", [&](const Rest::Request& request, Http::ResponseWriter response) -> Rest::Route::Result {
         try {
             const auto& body = request.body();
             std::string result = pqcService.encrypt_data(body);
             
             if (result.rfind("Encryption failed:", 0) == 0) {
+                response.headers()
+                .add<Http::Header::AccessControlAllowOrigin>("*")
+                .add<Http::Header::AccessControlAllowHeaders>("Content-Type")
+                .add<Http::Header::AccessControlAllowMethods>("POST, OPTIONS");
                 response.send(Http::Code::Internal_Server_Error, result);
             } else {
+                response.headers()
+                .add<Http::Header::AccessControlAllowOrigin>("*")
+                .add<Http::Header::AccessControlAllowHeaders>("Content-Type")
+                .add<Http::Header::AccessControlAllowMethods>("POST, OPTIONS");
                 response.send(Http::Code::Ok, result, MIME(Application, Json));
             }
 
         } catch (const std::exception& e) {
+            response.headers()
+            .add<Http::Header::AccessControlAllowOrigin>("*")
+            .add<Http::Header::AccessControlAllowHeaders>("Content-Type")
+            .add<Http::Header::AccessControlAllowMethods>("POST, OPTIONS");
             response.send(Http::Code::Internal_Server_Error, std::string("Exception: ") + e.what());
         }
-
         return Rest::Route::Result::Ok;
     });
+
+    Rest::Routes::Options(router, "/decrypt_data", [](const Rest::Request&, Http::ResponseWriter response) -> Rest::Route::Result {
+        response.headers()
+            .add<Http::Header::AccessControlAllowOrigin>("*")
+            .add<Http::Header::AccessControlAllowMethods>("POST, OPTIONS")
+            .add<Http::Header::AccessControlAllowHeaders>("Content-Type");
+        response.send(Http::Code::Ok);
+        return Rest::Route::Result::Ok;
+    });    
 
     Rest::Routes::Post(router, "/decrypt_data", [&](const Rest::Request& request, Http::ResponseWriter response) -> Rest::Route::Result {
         try {
             auto body = request.body();
             nlohmann::json result = pqcService.decrypt_data(body);
-
+            response.headers()
+            .add<Http::Header::AccessControlAllowOrigin>("*")
+            .add<Http::Header::AccessControlAllowHeaders>("Content-Type")
+            .add<Http::Header::AccessControlAllowMethods>("POST, OPTIONS");
             response.send(Http::Code::Ok, result.dump(4), MIME(Application, Json));
         } catch (const std::exception& e) {
+            response.headers()
+            .add<Http::Header::AccessControlAllowOrigin>("*")
+            .add<Http::Header::AccessControlAllowHeaders>("Content-Type")
+            .add<Http::Header::AccessControlAllowMethods>("POST, OPTIONS");
             response.send(Http::Code::Internal_Server_Error, std::string("Decryption error: ") + e.what());
         }
-
         return Rest::Route::Result::Ok;
     });
 
     Rest::Routes::Post(router, "/encrypt", [&](const Rest::Request& request, Http::ResponseWriter response) -> Rest::Route::Result {
         auto body = request.body();
         auto ciphertext = pqcService.encrypt(body);
+        response.headers()
+            .add<Http::Header::AccessControlAllowOrigin>("*")
+            .add<Http::Header::AccessControlAllowHeaders>("Content-Type")
+            .add<Http::Header::AccessControlAllowMethods>("POST, OPTIONS");
         response.send(Http::Code::Ok, "{\"ciphertext\":\"" + ciphertext + "\"}", MIME(Application, Json));
         return Rest::Route::Result::Ok;
     });
@@ -65,6 +109,10 @@ void setupRoutes(Rest::Router& router, PQCService& pqcService) {
     Rest::Routes::Post(router, "/upload", [&](const Rest::Request& request, Http::ResponseWriter response) -> Rest::Route::Result {
         auto body = request.body();
         std::string cid = pqcService.storeToIPFS(body);
+        response.headers()
+            .add<Http::Header::AccessControlAllowOrigin>("*")
+            .add<Http::Header::AccessControlAllowHeaders>("Content-Type")
+            .add<Http::Header::AccessControlAllowMethods>("POST, OPTIONS");
         response.send(Http::Code::Ok, "{\"cid\":\"" + cid + "\"}", MIME(Application, Json));
         return Rest::Route::Result::Ok;
     });
@@ -73,6 +121,10 @@ void setupRoutes(Rest::Router& router, PQCService& pqcService) {
         auto cid = request.param(":cid").as<std::string>();
         auto body = request.body();
         bool success = pqcService.fetchFromIPFS(cid, body);
+        response.headers()
+            .add<Http::Header::AccessControlAllowOrigin>("*")
+            .add<Http::Header::AccessControlAllowHeaders>("Content-Type")
+            .add<Http::Header::AccessControlAllowMethods>("GET");
         response.send(Http::Code::Ok, success ? "File downloaded." : "Failed to fetch file.");
         return Rest::Route::Result::Ok;
     });
