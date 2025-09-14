@@ -128,6 +128,8 @@ Easy Setup
 - First run the frontend by enterring command "npm start"
 - Second start the docker file by the command "docker compose up -d"
 
+NOTE - temp branch is the latest branch
+
 License
 -------
 MIT License – free to use, modify, and distribute.
