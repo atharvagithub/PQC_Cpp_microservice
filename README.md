@@ -70,6 +70,12 @@ Docker Setup
 Docker Compose (Optional + IPFS)
     docker compose up --build
 
+IPFS Setup
+------------
+1. Start local IPFS daemon
+    ipfs daemon
+ 
+
 API Endpoints
 -------------
 **POST /encrypt_data** - Encrypts data using hybrid Kyber512 + AES-GCM.
