@@ -115,6 +115,13 @@ Credits
 - Kyber PQC Algorithm
 - Pistache REST Framework
 
+Easy Setup
+-------
+- If you dont want to install everything seperatly then navigate to POC Frontend github link and clone the project
+- https://github.com/atharvagithub/PQC_Frontend
+- First run the frontend by enterring command "npm start"
+- Second start the docker file by the command "docker compose up -d"
+
 License
 -------
 MIT License – free to use, modify, and distribute.
